@@ -23,6 +23,7 @@ COPY backend/package*.json ./
 RUN npm ci
 
 COPY --from=builder /app/dist ./dist
+COPY backend/src/db/schema.sql ./src/db/schema.sql
 COPY dataset ./dataset
 
 EXPOSE 5001

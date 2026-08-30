@@ -56,8 +56,26 @@ async function runImport() {
   try {
     // 1. Initialize Schema
     console.log('📄 Executing database schema creation (schema.sql)...');
-    const schemaPath = path.join(__dirname, '../db/schema.sql');
-    const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
+    const schemaCandidates = [
+      path.join(__dirname, '../db/schema.sql'),
+      path.join(__dirname, '../../src/db/schema.sql'),
+      path.join(process.cwd(), 'src/db/schema.sql'),
+      path.join(process.cwd(), 'backend/src/db/schema.sql'),
+      path.join(process.cwd(), 'dist/db/schema.sql'),
+    ];
+
+    let schemaSql = '';
+    for (const cand of schemaCandidates) {
+      if (fs.existsSync(cand)) {
+        schemaSql = fs.readFileSync(cand, 'utf-8');
+        break;
+      }
+    }
+
+    if (!schemaSql) {
+      throw new Error(`schema.sql not found in candidate paths: ${schemaCandidates.join(', ')}`);
+    }
+
     await client.query(schemaSql);
     console.log('✅ Schema and indexes successfully initialized!');
 

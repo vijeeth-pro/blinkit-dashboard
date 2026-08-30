@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"import('fs').then(fs => { fs.mkdirSync('dist/db', { recursive: true }); fs.copyFileSync('src/db/schema.sql', 'dist/db/schema.sql'); })\"",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "import-data": "node dist/scripts/importData.js"
