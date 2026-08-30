@@ -29,6 +29,11 @@ services:
       PORT: 5001
       NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/blinkit_db
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgrespassword
+      PGDATABASE: blinkit_db
     depends_on:
       postgres:
         condition: service_healthy
