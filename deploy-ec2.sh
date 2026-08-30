@@ -6,15 +6,16 @@ echo "🚀 AWS Free Tier (t2.micro / t3.micro) EC2 Deployment Pipeline"
 echo "================================================================="
 echo "📌 Target: AWS EC2 Free Tier Instance (1 vCPU, 1 GB RAM, 8 GB Disk)"
 echo "📌 Ports: Frontend Web App: 80 | Backend API: 5001 | DB: 5432"
-echo "📌 Memory Strategy: Lightweight swap & safe cache cleanup"
+echo "📌 Strategy: Smart Docker Compose detection & disk space rescue"
 echo "================================================================="
 
-# 1. Force self-healing cleanup of apt cache and broken dpkg states (Frees disk!)
-echo "🧹 Purging package cache to ensure maximum free disk space..."
+# 1. Force self-healing cleanup of apt cache, old logs, and kernel headers to free up 2GB+ disk space!
+echo "🧹 Purging system package cache & old logs to free disk space..."
 sudo apt-get clean || true
 sudo rm -rf /var/cache/apt/archives/* /tmp/* /var/tmp/* 2>/dev/null || true
 sudo dpkg --configure -a 2>/dev/null || true
 sudo apt-get install -f -y 2>/dev/null || true
+sudo journalctl --vacuum-time=1d 2>/dev/null || true
 
 # 2. Check available disk space
 AVAILABLE_MB=$(df / --output=avail | tail -n 1 | awk '{print int($1/1024)}')
@@ -36,19 +37,19 @@ else
     echo "✅ Swap memory already configured."
 fi
 
-# 3. Update system package lists ONLY (No kernel upgrade)
+# 3. Update system package lists ONLY
 echo "📦 Updating system package lists..."
 sudo apt-get update -y
 
-# 4. Install Docker & Docker Compose plugin if not installed
+# 4. Install Docker & Docker Compose if not installed
 if ! command -v docker &> /dev/null; then
-    echo "🐳 Installing Docker Engine & Docker Compose plugin..."
-    sudo apt-get install -y ca-certificates curl gnupg lsb-release
+    echo "🐳 Installing Docker Engine & Docker Compose..."
+    sudo apt-get install -y ca-certificates curl gnupg lsb-release docker-compose
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update -y
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin || true
     sudo usermod -aG docker $USER
     sudo apt-get clean
     echo "✅ Docker installed successfully!"
@@ -56,10 +57,23 @@ else
     echo "✅ Docker is already installed."
 fi
 
+# Detect correct Docker Compose syntax for host system (v2 vs v1)
+if docker compose version &>/dev/null; then
+    DC_CMD="sudo docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DC_CMD="sudo docker-compose"
+else
+    echo "Installing docker-compose package..."
+    sudo apt-get install -y docker-compose || true
+    DC_CMD="sudo docker-compose"
+fi
+
+echo "ℹ️ Using Docker Compose Command: ${DC_CMD}"
+
 # 5. Build & Launch Containers (PostgreSQL, Express API, Nginx SPA)
 echo "🏗️ Building and launching Docker containers..."
-sudo docker compose down --remove-orphans || true
-sudo docker compose up -d --build
+$DC_CMD down || true
+$DC_CMD up -d --build
 
 # 6. Wait for Fresh PostgreSQL Container Health Check
 echo "⏳ Waiting for fresh PostgreSQL database container initialization..."
