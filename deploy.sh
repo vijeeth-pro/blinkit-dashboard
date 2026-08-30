@@ -7,20 +7,21 @@ echo "================================================================="
 echo "📌 Domain: quantzig.hopto.org"
 echo "📌 Target: AWS EC2 Linux Instance (t2.micro / t3.micro / Custom)"
 echo "📌 Ports: Frontend Web App: 80 | Backend API: 5001 | DB: 5432"
-echo "📌 Strategy: Deep Docker image prune & layer storage recovery"
+echo "📌 Strategy: Deep System Kernel & Log Cleanup (Auto-purge old packages)"
 echo "================================================================="
 
-# 1. Force self-healing cleanup of apt cache, old logs, and kernel headers to free up disk space!
-echo "🧹 Purging system package cache & old logs to free disk space..."
+# 1. Force deep system cleanup (Purge old kernels, apt archives, and system logs to reclaim 3-5 GB!)
+echo "🧹 Deep system cleanup: purging old unused kernels, apt cache, & logs..."
+sudo apt-get autoremove --purge -y 2>/dev/null || true
 sudo apt-get clean || true
-sudo rm -rf /var/cache/apt/archives/* /tmp/* /var/tmp/* 2>/dev/null || true
+sudo rm -rf /var/cache/apt/archives/* /tmp/* /var/tmp/* /var/lib/snapd/cache/* 2>/dev/null || true
+sudo journalctl --vacuum-size=50M 2>/dev/null || true
 sudo dpkg --configure -a 2>/dev/null || true
 sudo apt-get install -f -y 2>/dev/null || true
-sudo journalctl --vacuum-time=1d 2>/dev/null || true
 
-# 2. Prune old unused Docker images, dead layers, and volumes from previous projects to free 4GB+ space!
+# 2. Prune old unused Docker images, dead layers, and volumes
 if command -v docker &> /dev/null; then
-    echo "🐳 Pruning unused Docker images, layers, and volumes to free storage..."
+    echo "🐳 Pruning unused Docker images, layers, and volumes..."
     sudo docker system prune -a -f || true
 fi
 
