@@ -4,6 +4,9 @@ import { fileURLToPath } from 'url';
 import csv from 'csv-parser';
 import { pool } from '../config/database.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const datasetCandidates = [
   path.join(__dirname, '../../../dataset'),
   path.join(__dirname, '../../dataset'),
