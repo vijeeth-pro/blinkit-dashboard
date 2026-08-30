@@ -4,6 +4,7 @@ set -e
 echo "================================================================="
 echo "🚀 AWS Free Tier (t2.micro / t3.micro) EC2 Deployment Pipeline"
 echo "================================================================="
+echo "📌 Domain: quantzig.hopto.org"
 echo "📌 Target: AWS EC2 Linux Instance (t2.micro / t3.micro / Custom)"
 echo "📌 Ports: Frontend Web App: 80 | Backend API: 5001 | DB: 5432"
 echo "📌 Strategy: Foolproof Docker Compose Installer & Memory Tuning"
@@ -106,5 +107,5 @@ sudo apt-get clean || true
 
 echo "================================================================="
 echo "🎉 AWS Free Tier EC2 Deployment Complete!"
-echo "🌐 Your Blinkit Dashboard is live on: http://$(curl -s http://checkip.amazonaws.com)"
+echo "🌐 Your Blinkit Dashboard is live on: http://quantzig.hopto.org"
 echo "================================================================="

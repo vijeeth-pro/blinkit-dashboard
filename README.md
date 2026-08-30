@@ -2,6 +2,8 @@
 
 An enterprise-grade, full-stack **Blinkit Business Intelligence & Reporting Platform** built with **React 19 (TypeScript, Vite, Tailwind CSS v4, TanStack Query, Recharts, D3.js)** on the frontend and **Node.js (TypeScript, Express, Zod, Joi, pg)** on the backend, powered by a normalized **PostgreSQL** database with real-time analytical aggregations over **103,340 order records**.
 
+🌐 **Live Application URL**: [`http://quantzig.hopto.org`](http://quantzig.hopto.org)
+
 ---
 
 ## 🏛️ High-Level Architecture
@@ -66,6 +68,7 @@ React Frontend (Vite + TS + Tailwind CSS v4 + TanStack Query + Recharts + D3.js)
 
 The repository includes production containerization and automated one-click deployment scripts for **AWS Free Tier EC2**:
 
+- **Official Live Domain**: [`http://quantzig.hopto.org`](http://quantzig.hopto.org)
 - **Standard HTTP Port**: `80`
 - **Backend API Port**: `5001`
 - **PostgreSQL Port**: `5432`

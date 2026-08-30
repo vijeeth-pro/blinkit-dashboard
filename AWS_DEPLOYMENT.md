@@ -1,6 +1,12 @@
 # ☁️ AWS Free Tier EC2 Deployment Guide — Blinkit BI Dashboard
 
-This guide provides step-by-step instructions for deploying the **Blinkit Business Intelligence & Reporting Platform** on an **AWS EC2 Free Tier (`t2.micro` or `t3.micro`) instance**.
+This guide provides step-by-step instructions for deploying the **Blinkit Business Intelligence & Reporting Platform** on an **AWS EC2 Free Tier (`t2.micro` or `t3.micro`) instance** under the domain **`quantzig.hopto.org`**.
+
+---
+
+## 🌐 Live Application Domain
+- **Official Domain**: [`http://quantzig.hopto.org`](http://quantzig.hopto.org)
+- **Host Public IP**: `3.7.248.196` (Mapped via No-IP Dynamic DNS)
 
 ---
 
@@ -65,57 +71,15 @@ The script will automatically:
 - Spin up PostgreSQL 16 (`blinkit_db`), Express Backend API (Port 5001), and Nginx Frontend SPA (Port 80).
 - Automatically ingest all **103,340 analytical records** into PostgreSQL.
 
-Your dashboard will be live at `http://YOUR_EC2_PUBLIC_IP`!
+Your dashboard will be live at `http://quantzig.hopto.org`!
 
 ---
 
-## 📦 Option B: Manual Setup (Node.js + PM2 + Nginx + Local Postgres)
+## 🔒 Step 4: Enable SSL (HTTPS) with Let's Encrypt (Optional)
 
-If deploying directly on Ubuntu without Docker:
+To enable secure `https://quantzig.hopto.org`:
 
-### 1. Configure Swap Space
 ```bash
-sudo fallocate -l 1G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=1024
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-```
-
-### 2. Install Node.js v22 & PostgreSQL
-```bash
-sudo apt-get update && sudo apt-get upgrade -y
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs build-essential
-sudo npm install -g pm2
-sudo apt-get install -y postgresql postgresql-contrib
-```
-
-### 3. Configure Database & Start Backend
-```bash
-sudo -u postgres psql -c "CREATE DATABASE blinkit_db;"
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgrespassword';"
-
-cd backend
-cp .env.example .env
-npm ci
-npm run build
-npm run import-data
-
-pm2 start ecosystem.config.cjs
-pm2 save
-pm2 startup
-```
-
-### 4. Build Frontend & Configure Nginx
-```bash
-cd ../frontend
-cp .env.example .env
-npm ci
-npm run build
-
-sudo apt-get install -y nginx
-sudo cp nginx.conf /etc/nginx/sites-available/blinkit
-sudo ln -s /etc/nginx/sites-available/blinkit /etc/nginx/sites-enabled/
-sudo systemctl restart nginx
+sudo apt-get install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d quantzig.hopto.org
 ```
