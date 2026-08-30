@@ -6,43 +6,42 @@ echo "🚀 AWS Free Tier (t2.micro / t3.micro) EC2 Deployment Pipeline"
 echo "================================================================="
 echo "📌 Domain: quantzig.hopto.org"
 echo "📌 Target: AWS EC2 Linux Instance (t2.micro / t3.micro / Custom)"
-echo "📌 Strategy: Sequential Image Pull & Ultra-Lightweight Layer Build"
+echo "📌 Strategy: Containerd Storage Reset & Max Disk Space Recovery"
 echo "================================================================="
 
-# 1. Purge all cached package files, apt archives, and system logs (Frees 1-2 GB!)
-echo "🧹 Purging package cache & system logs..."
+# 1. Force removal of swap file if disk space is dangerously low
+AVAILABLE_MB=$(df / --output=avail | tail -n 1 | awk '{print int($1/1024)}')
+echo "💾 Initial Available Disk Space: ${AVAILABLE_MB} MB"
+
+if [ "$AVAILABLE_MB" -lt 1500 ] && [ -f /swapfile ]; then
+    echo "⚠️ Low disk space (${AVAILABLE_MB}MB). Removing 2GB swap file to free disk space..."
+    sudo swapoff /swapfile 2>/dev/null || true
+    sudo rm -f /swapfile
+    sudo sed -i '/\/swapfile/d' /etc/fstab || true
+    echo "✅ Swapfile removed to reclaim 2GB disk space!"
+fi
+
+# 2. Deep system cleanup: purge old kernels, apt archives, and system logs
+echo "🧹 Reclaiming OS disk space..."
 sudo apt-get autoremove --purge -y 2>/dev/null || true
 sudo apt-get clean || true
 sudo rm -rf /var/cache/apt/archives/* /tmp/* /var/tmp/* /var/lib/snapd/cache/* 2>/dev/null || true
-sudo journalctl --vacuum-size=20M 2>/dev/null || true
+sudo journalctl --vacuum-size=10M 2>/dev/null || true
 sudo dpkg --configure -a 2>/dev/null || true
 sudo apt-get install -f -y 2>/dev/null || true
 
-# 2. Prune old unused Docker images, layers, volumes, and build cache
-if command -v docker &> /dev/null; then
-    echo "🐳 Pruning unused Docker images, layers, volumes, & build cache..."
-    sudo docker system prune -a --volumes -f || true
-    sudo docker builder prune -a -f || true
-fi
-
-# 3. Check available disk space
+# 3. Reset broken Docker containerd snapshots if disk space is below 1500MB
 AVAILABLE_MB=$(df / --output=avail | tail -n 1 | awk '{print int($1/1024)}')
-echo "💾 Available Disk Space: ${AVAILABLE_MB} MB"
-
-# 4. Create Swap space (512MB minimum) to prevent memory OOM crashes
-if [ ! -f /swapfile ]; then
-    if [ "$AVAILABLE_MB" -gt 800 ]; then
-        echo "🧠 Creating 512MB Swap file for memory safety..."
-        sudo fallocate -l 512M /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=512
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-        echo "✅ 512MB Swap file configured successfully!"
-    fi
-else
-    echo "✅ Swap memory already configured."
+if [ "$AVAILABLE_MB" -lt 1500 ] && command -v docker &> /dev/null; then
+    echo "🧹 Resetting Docker containerd snapshot storage to reclaim layer space..."
+    sudo systemctl stop docker containerd 2>/dev/null || true
+    sudo rm -rf /var/lib/docker/* /var/lib/containerd/* 2>/dev/null || true
+    sudo systemctl start docker containerd 2>/dev/null || true
 fi
+
+# 4. Re-check final available disk space
+AVAILABLE_MB=$(df / --output=avail | tail -n 1 | awk '{print int($1/1024)}')
+echo "💾 Reclaimed Available Disk Space: ${AVAILABLE_MB} MB"
 
 # 5. Update system package lists ONLY
 echo "📦 Updating system package lists..."
@@ -91,7 +90,7 @@ fi
 echo "ℹ️ Using Docker Compose Command: ${DC_CMD}"
 
 # 8. Pull base images sequentially to save temporary layer extraction space
-echo "📥 Pulling base Docker images sequentially..."
+echo "📥 Pulling base Docker images..."
 sudo docker pull postgres:16-alpine
 sudo docker pull node:22-alpine
 sudo docker pull nginx:alpine
