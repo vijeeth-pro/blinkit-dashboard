@@ -4,9 +4,22 @@ import { fileURLToPath } from 'url';
 import csv from 'csv-parser';
 import { pool } from '../config/database.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATASET_DIR = path.join(__dirname, '../../../dataset');
+const datasetCandidates = [
+  path.join(__dirname, '../../../dataset'),
+  path.join(__dirname, '../../dataset'),
+  path.join(__dirname, '../dataset'),
+  path.join(process.cwd(), 'dataset'),
+  path.join(process.cwd(), '../dataset'),
+];
+
+let DATASET_DIR = datasetCandidates[0];
+for (const cand of datasetCandidates) {
+  if (fs.existsSync(cand)) {
+    DATASET_DIR = cand;
+    break;
+  }
+}
+console.log(`📁 Resolved Dataset Directory: ${DATASET_DIR}`);
 
 function parseDate(val: string | null): string | null {
   if (!val || val.trim() === '' || val.toUpperCase() === 'NULL') return null;
