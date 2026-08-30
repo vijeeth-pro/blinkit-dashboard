@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgrespassword
       POSTGRES_DB: blinkit_db
     ports:
-      - "5433:5432" # Exposed on Host Port 5433 to avoid collision with running Postgres
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,9 +26,9 @@ services:
     container_name: blinkit_backend
     restart: always
     ports:
-      - "5002:5002" # Exposed on Host Port 5002 to avoid collision with Port 5001
+      - "5001:5001"
     environment:
-      PORT: 5002
+      PORT: 5001
       NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/blinkit_db
     depends_on:
@@ -44,7 +44,7 @@ services:
     container_name: blinkit_frontend
     restart: always
     ports:
-      - "8080:80" # Exposed on Host Port 8080 to avoid collision with Port 80
+      - "80:80"
     depends_on:
       - backend
 

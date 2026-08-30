@@ -11,7 +11,7 @@ React Frontend (Vite + TS + Tailwind CSS v4 + TanStack Query + Recharts + D3.js)
                             │
                             │ (Axios REST API Requests with VITE_API_BASE_URL)
                             ▼
-           Express Backend API (Node.js + TS on Port 5002)
+           Express Backend API (Node.js + TS on Port 5001)
  ┌───────────────────────────────────────────────────────────────────────┐
  │ Gzip Compression Middleware (compression)                             │
  │ Joi Security Request Body & Query Validation Middleware              │
@@ -23,7 +23,7 @@ React Frontend (Vite + TS + Tailwind CSS v4 + TanStack Query + Recharts + D3.js)
                             │
                             │ (pg Connection Pool)
                             ▼
-              PostgreSQL Database (`blinkit_db` on Port 5432 / Host 5433)
+              PostgreSQL Database (`blinkit_db` on Port 5432)
  ┌───────────────────────────────────────────────────────────────────────┐
  │ products, customers, orders, order_items                             │
  │ delivery_performance, customer_feedback                              │
@@ -62,14 +62,14 @@ React Frontend (Vite + TS + Tailwind CSS v4 + TanStack Query + Recharts + D3.js)
 
 ---
 
-## ☁️ AWS EC2 Deployment Setup (Non-Conflicting Ports)
+## ☁️ AWS Free Tier EC2 Deployment Setup
 
-The repository includes production containerization and automated one-click deployment scripts for **AWS EC2**:
+The repository includes production containerization and automated one-click deployment scripts for **AWS Free Tier EC2**:
 
-- **Host Frontend Web Port**: `8080` (Avoids Port 80 collision)
-- **Host Backend API Port**: `5002` (Avoids Port 5001 collision)
-- **Host PostgreSQL Port**: `5433` (Avoids Port 5432 collision)
-- **Automated Deployment Script**: [`deploy-ec2.sh`](file:///Users/vijeethsankar/project/blinkit/deploy-ec2.sh)
+- **Standard HTTP Port**: `80`
+- **Backend API Port**: `5001`
+- **PostgreSQL Port**: `5432`
+- **Automated Deployment Script**: [`deploy.sh`](file:///Users/vijeethsankar/project/blinkit/deploy.sh)
 - **Comprehensive EC2 Setup Guide**: [`AWS_DEPLOYMENT.md`](file:///Users/vijeethsankar/project/blinkit/AWS_DEPLOYMENT.md)
 - **Docker Compose Setup**: [`docker-compose.yml`](file:///Users/vijeethsankar/project/blinkit/docker-compose.yml) (PostgreSQL 16 + Express API + Nginx SPA Reverse Proxy)
 
@@ -84,8 +84,8 @@ cd blinkit-dashboard
 git checkout dev
 
 # 3. Run one-click deployment script
-chmod +x deploy-ec2.sh
-./deploy-ec2.sh
+chmod +x deploy.sh
+./deploy.sh
 ```
 
 ---
@@ -153,20 +153,20 @@ npm run import-data
 ### 3. Environment Setup
 #### Backend (`backend/.env`):
 ```env
-PORT=5002
+PORT=5001
 NODE_ENV=development
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/blinkit_db
 ```
 
 #### Frontend (`frontend/.env`):
 ```env
-VITE_API_BASE_URL=http://localhost:5002/api
+VITE_API_BASE_URL=http://localhost:5001/api
 ```
 
 ### 4. Start Development Servers
 From project root directory:
 ```bash
-# Start backend server (Port 5002)
+# Start backend server (Port 5001)
 npm run dev:backend
 
 # Start frontend client (Port 5173) in a second terminal

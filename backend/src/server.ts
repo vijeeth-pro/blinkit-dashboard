@@ -3,7 +3,7 @@ import app from './app.js';
 
 dotenv.config();
 
-const PORT = parseInt(process.env.PORT || '5002', 10);
+const PORT = parseInt(process.env.PORT || '5001', 10);
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Blinkit BI Backend Server listening on http://localhost:${PORT}`);

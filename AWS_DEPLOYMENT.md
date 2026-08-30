@@ -1,27 +1,24 @@
 # ☁️ AWS Free Tier EC2 Deployment Guide — Blinkit BI Dashboard
 
-This guide provides step-by-step instructions for deploying the **Blinkit Business Intelligence & Reporting Platform** on an **AWS EC2 Free Tier (`t2.micro` or `t3.micro`) instance** alongside existing running projects.
+This guide provides step-by-step instructions for deploying the **Blinkit Business Intelligence & Reporting Platform** on an **AWS EC2 Free Tier (`t2.micro` or `t3.micro`) instance**.
 
 ---
 
-## 🔌 Non-Conflicting Port Allocation Scheme
+## 🔌 Standard Production Port Scheme (Free Tier)
 
-To prevent collisions with other projects already running on your EC2 instance:
-
-| Service | Internal Port | Host Port (EC2) | Security Group Rule |
+| Service | Container Port | Host Port (EC2) | Security Group Rule |
 | :--- | :--- | :--- | :--- |
-| **Frontend Web App** | `80` | **`8080`** | Custom TCP (`8080`) — Anywhere |
-| **Backend Express API** | `5002` | **`5002`** | Custom TCP (`5002`) — Anywhere |
-| **PostgreSQL Database** | `5432` | **`5433`** | Localhost only |
+| **Frontend Web App** | `80` | **`80`** | HTTP (`80`) — Anywhere |
+| **Backend Express API** | `5001` | **`5001`** | Custom TCP (`5001`) — Anywhere *(Optional)* |
+| **PostgreSQL Database** | `5432` | **`5432`** | Localhost / Internal Docker Network |
 
 ---
 
-## 💡 Important: AWS Free Tier (`t2.micro`) Memory Optimization
+## 💡 AWS Free Tier (`t2.micro`) Lightweight Memory Optimization
 
-AWS Free Tier EC2 instances (`t2.micro` / `t3.micro`) come with **1 vCPU and 1 GB RAM**.  
-During `npm install`, Vite building, or Docker image compilation, RAM usage can temporarily exceed 1 GB, causing the Linux kernel to terminate the process (`Killed`).
-
-Our automated script ([`deploy-ec2.sh`](file:///Users/vijeethsankar/project/blinkit/deploy-ec2.sh)) **automatically creates a 2 GB Swap file (`/swapfile`)**, expanding your instance's virtual memory to **3 GB total**, ensuring 100% stable, zero-crash deployment!
+AWS Free Tier EC2 instances (`t2.micro` / `t3.micro`) provide **1 vCPU and 1 GB RAM**.  
+To ensure your deployment stays 100% free with zero extra charges:
+- The automated deployment script ([`deploy.sh`](file:///Users/vijeethsankar/project/blinkit/deploy.sh)) **automatically allocates a lightweight 1 GB Swap file (`/swapfile`)**, expanding total virtual memory to **2 GB total**, keeping memory usage low and stable without needing paid RAM upgrades!
 
 ---
 
@@ -36,8 +33,8 @@ Our automated script ([`deploy-ec2.sh`](file:///Users/vijeethsankar/project/blin
 3. **Network & Security Group Settings**:
    Allow inbound traffic for the following ports:
    - `SSH` (Port 22) — Anywhere or Your IP
-   - `Custom TCP` (Port 8080) — Anywhere (`0.0.0.0/0`)
-   - `Custom TCP` (Port 5002) — Anywhere (`0.0.0.0/0`)
+   - `HTTP` (Port 80) — Anywhere (`0.0.0.0/0`)
+   - `HTTPS` (Port 443) — Anywhere (`0.0.0.0/0`)
 4. Click **Launch Instance**.
 
 ---
@@ -58,17 +55,17 @@ git checkout dev
 
 ### 3. Run the Automated Free Tier Deployment Script
 ```bash
-chmod +x deploy-ec2.sh
-./deploy-ec2.sh
+chmod +x deploy.sh
+./deploy.sh
 ```
 
 The script will automatically:
-- Configure a **2 GB Swap file** to prevent OOM process kills on 1 GB RAM.
+- Configure a lightweight **1 GB Swap file** to prevent memory locks.
 - Install Docker & Docker Compose.
-- Spin up PostgreSQL 16 (`blinkit_db`), Express Backend API (Port 5002), and Nginx Frontend SPA (Port 8080).
+- Spin up PostgreSQL 16 (`blinkit_db`), Express Backend API (Port 5001), and Nginx Frontend SPA (Port 80).
 - Automatically ingest all **103,340 analytical records** into PostgreSQL.
 
-Your dashboard will be live at `http://YOUR_EC2_PUBLIC_IP:8080`!
+Your dashboard will be live at `http://YOUR_EC2_PUBLIC_IP`!
 
 ---
 
@@ -76,9 +73,9 @@ Your dashboard will be live at `http://YOUR_EC2_PUBLIC_IP:8080`!
 
 If deploying directly on Ubuntu without Docker:
 
-### 1. Configure 2GB Swap Space
+### 1. Configure Swap Space
 ```bash
-sudo fallocate -l 2G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+sudo fallocate -l 1G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=1024
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
@@ -121,13 +118,4 @@ sudo apt-get install -y nginx
 sudo cp nginx.conf /etc/nginx/sites-available/blinkit
 sudo ln -s /etc/nginx/sites-available/blinkit /etc/nginx/sites-enabled/
 sudo systemctl restart nginx
-```
-
----
-
-## 📊 Monitoring & Memory Check
-
-Check available memory and swap on EC2:
-```bash
-free -h
 ```

@@ -2,14 +2,15 @@
 set -e
 
 echo "================================================================="
-echo "🚀 AWS EC2 Linux Fresh Database & Container Deployment Pipeline"
+echo "🚀 AWS Free Tier (t2.micro / t3.micro) EC2 Deployment Pipeline"
 echo "================================================================="
-echo "📌 Target: AWS EC2 Linux Instance (t2.micro / t3.micro / Custom)"
-echo "📌 Strategy: Disk-Safe & Self-Healing Setup"
+echo "📌 Target: AWS EC2 Free Tier Instance (1 vCPU, 1 GB RAM, 8 GB Disk)"
+echo "📌 Ports: Frontend Web App: 80 | Backend API: 5001 | DB: 5432"
+echo "📌 Memory Strategy: Lightweight swap & safe cache cleanup"
 echo "================================================================="
 
-# 1. Force self-healing cleanup of apt cache and broken dpkg states (Frees 3-5 GB!)
-echo "🧹 Self-healing disk cleanup (purging apt archive cache & fixing broken dpkg)..."
+# 1. Force self-healing cleanup of apt cache and broken dpkg states (Frees disk!)
+echo "🧹 Purging package cache to ensure maximum free disk space..."
 sudo apt-get clean || true
 sudo rm -rf /var/cache/apt/archives/* /tmp/* /var/tmp/* 2>/dev/null || true
 sudo dpkg --configure -a 2>/dev/null || true
@@ -29,13 +30,13 @@ if [ ! -f /swapfile ]; then
         echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
         echo "✅ 1GB Swap file configured successfully!"
     else
-        echo "⚠️ Low disk space (${AVAILABLE_MB}MB available). Skipping swap file creation to prevent disk full error."
+        echo "⚠️ Low disk space (${AVAILABLE_MB}MB available). Skipping swap file creation."
     fi
 else
     echo "✅ Swap memory already configured."
 fi
 
-# 3. Update system package lists ONLY
+# 3. Update system package lists ONLY (No kernel upgrade)
 echo "📦 Updating system package lists..."
 sudo apt-get update -y
 
@@ -77,6 +78,6 @@ sudo docker system prune -f || true
 sudo apt-get clean || true
 
 echo "================================================================="
-echo "🎉 AWS EC2 Deployment & Data Mapping Complete!"
-echo "🌐 Your Blinkit Dashboard is live on: http://$(curl -s http://checkip.amazonaws.com):8080"
+echo "🎉 AWS Free Tier EC2 Deployment Complete!"
+echo "🌐 Your Blinkit Dashboard is live on: http://$(curl -s http://checkip.amazonaws.com)"
 echo "================================================================="
